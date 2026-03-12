@@ -30,7 +30,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-
+//    I deleted it Because the from oAuth2 maybe less than 3
 //    @Size(min = 3, max = 20, message = "Name must be between 3 and 20 characters")
     @Column(nullable = false)
     private String name;
@@ -43,7 +43,7 @@ public class User {
     @Email(message = "Invalid Email, Please Enter Valid Email")
     @Column(unique = true, nullable = false)
     private String email;
-
+//    I deleted it because when user login with oAuth2 password is null
 //    @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
 
