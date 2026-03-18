@@ -16,6 +16,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -76,4 +78,10 @@ public class User {
 
     @LastModifiedBy
     private String updatedBy;
+
+    @OneToMany(mappedBy = "uploader")
+    Set<Video> videos =new HashSet<>();
+
+    @OneToMany(mappedBy = "subscriber")
+    private Set<Subscription> subscriptions = new HashSet<>();
 }

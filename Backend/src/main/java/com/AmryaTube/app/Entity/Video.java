@@ -48,7 +48,8 @@ public class Video {
 
 
     @ManyToOne
-    private User uploder;
+    @JoinColumn(name = "uploader_id")
+    private User uploader;
 
 
 

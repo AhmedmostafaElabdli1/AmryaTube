@@ -6,7 +6,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Flow;
 
 @Entity
 @Table(name = "channel")
@@ -23,6 +25,9 @@ public class Channel {
     @ManyToOne
     @JoinColumn(name = "owner_id")
     private User owner;
+
+    @OneToMany(mappedBy = "channel")
+    private Set<Subscription> subscribers;
 
 
 }
