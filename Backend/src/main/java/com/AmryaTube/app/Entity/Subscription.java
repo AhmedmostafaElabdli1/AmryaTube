@@ -35,6 +35,8 @@ public class Subscription {
     @JoinColumn(name = "channel_id")
     private Channel channel;
 
+    private boolean isBloked;
+
     private Date subscribedAt;
 
     private boolean notificationEnabled;
