@@ -29,5 +29,9 @@ public class Channel {
     @OneToMany(mappedBy = "channel")
     private Set<Subscription> subscribers;
 
+    @OneToMany(mappedBy = "channel")
+    private Set<Video> videos;
+
+
 
 }

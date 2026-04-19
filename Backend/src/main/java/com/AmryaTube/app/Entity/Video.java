@@ -51,6 +51,10 @@ public class Video {
     @JoinColumn(name = "uploader_id")
     private User uploader;
 
+    @ManyToOne
+    @JoinColumn(name = "channel_name")
+    private Channel channel;
+
 
 
 }
