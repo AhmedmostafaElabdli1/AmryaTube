@@ -7,7 +7,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -21,7 +20,7 @@ import java.util.List;
 @Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
-    private JwtService jwtService;
+    private final JwtService jwtService;
 
     public JwtFilter(JwtService jwtService) {
         this.jwtService = jwtService;
@@ -33,34 +32,15 @@ public class JwtFilter extends OncePerRequestFilter {
     public void doFilterInternal(HttpServletRequest request, HttpServletResponse response , FilterChain filterChain)
     throws ServletException, IOException {
 
-        String token=null;
-        String authHeader = request.getHeader("Authorization");
-
-
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7);
-            log.debug("Token is here "+ token);
-        }else{
-            log.info("Token is null");
-        }
-
-        if(token == null && request.getCookies() != null){
-            for(Cookie cookie : request.getCookies()){
-                if(cookie.getName().equals("access-token")){
-                    log.info("Access Token is here "+ cookie.getValue());
-                    token = cookie.getValue();
-                    break;
-                }
-            }
-        }
+        String token = resolveToken(request);
 
         if(token == null){
-            log.debug("Token is null");
+            log.debug("No token found in request");
         }
 
         if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             if (jwtService.isTokenValid(token)) {
-                System.out.println("Token is valid");
+                log.debug("Token is valid");
                 String email = jwtService.extractEmail(token);
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(email,
@@ -74,10 +54,26 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request,response);
+    }
 
+    private String resolveToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            log.debug("Token from Authorization header: {}", token);
+            return token;
+        }
 
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if (cookie.getName().equals("access-token")) {
+                    log.debug("Token from access-token cookie: {}", cookie.getValue());
+                    return cookie.getValue();
+                }
+            }
+        }
 
-
+        return null;
     }
 
 }
