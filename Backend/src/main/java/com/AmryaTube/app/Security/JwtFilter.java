@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,6 +18,7 @@ import java.util.List;
 
 
 @Component
+@Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
     private JwtService jwtService;
@@ -37,15 +39,15 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
-            System.out.println("Token is here "+ token);
+            log.debug("Token is here "+ token);
         }else{
-            System.out.println("Token is null here ");
+            log.info("Token is null");
         }
 
         if(token == null && request.getCookies() != null){
             for(Cookie cookie : request.getCookies()){
                 if(cookie.getName().equals("access-token")){
-                    System.out.println("Token is Cookies here "+ cookie.getValue());
+                    log.info("Access Token is here "+ cookie.getValue());
                     token = cookie.getValue();
                     break;
                 }
@@ -53,7 +55,7 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         if(token == null){
-            System.out.println("Token is not null here "+ token);
+            log.debug("Token is not null here "+ token);
         }
 
         if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
