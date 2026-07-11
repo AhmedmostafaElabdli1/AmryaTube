@@ -55,7 +55,7 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         if(token == null){
-            log.debug("Token is not null here "+ token);
+            log.debug("Token is null");
         }
 
         if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
