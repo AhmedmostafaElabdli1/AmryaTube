@@ -1,6 +1,6 @@
-package com.AmryaTube.app.Security;
+package com.AmryaTube.app.security;
 
-import com.AmryaTube.app.Service.JwtService;
+import com.AmryaTube.app.auth.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;

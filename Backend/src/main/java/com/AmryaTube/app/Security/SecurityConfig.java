@@ -1,8 +1,8 @@
-package com.AmryaTube.app.Security;
+package com.AmryaTube.app.security;
 
-import com.AmryaTube.app.Security.OAuth2Handler.OAuth2FailureHandler;
-import com.AmryaTube.app.Security.OAuth2Handler.OAuth2SuccessHandler;
-import com.AmryaTube.app.Security.SecurityService.CustomUserDetailsService;
+import com.AmryaTube.app.security.OAuth2FailureHandler;
+import com.AmryaTube.app.security.OAuth2SuccessHandler;
+import com.AmryaTube.app.security.CustomUserDetailsService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
