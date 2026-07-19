@@ -1,5 +1,6 @@
 package com.AmryaTube.app.common.exception;
 
+import com.AmryaTube.app.auth.exception.OrganizationRegisterationNotAllowed;
 import com.AmryaTube.app.common.dto.response.ErrorResponse;
 import com.AmryaTube.app.playlist.exception.PlaylistNotFound;
 import com.AmryaTube.app.playlist.exception.VideoAlreadyInPlaylist;
@@ -9,12 +10,14 @@ import com.AmryaTube.app.user.exception.UserNotExist;
 import com.AmryaTube.app.video.exception.VideoNotFound;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.Instant;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -31,44 +34,59 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDenied(HttpServletRequest req, AccessDeniedException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(build(HttpStatus.FORBIDDEN, "Access Denied", "You don't have permission to access this resource", req));
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleAccessDenied(HttpServletRequest req, AccessDeniedException ex) {
+        return build(HttpStatus.FORBIDDEN, "Access Denied", "You don't have permission to access this resource", req);
+    }
+
+    @ExceptionHandler(OrganizationRegisterationNotAllowed.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleOrganizationRegistrationNotAllowed(HttpServletRequest req, OrganizationRegisterationNotAllowed ex) {
+        return build(HttpStatus.FORBIDDEN, "Organization Registration Not Allowed", ex.getMessage(), req);
     }
 
     @ExceptionHandler(EmailAlreadyRegistered.class)
-    public ResponseEntity<ErrorResponse> handleEmailExists(HttpServletRequest req, EmailAlreadyRegistered ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(build(HttpStatus.CONFLICT, "Email Already Registered", ex.getMessage(), req));
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleEmailExists(HttpServletRequest req, EmailAlreadyRegistered ex) {
+        return build(HttpStatus.CONFLICT, "Email Already Registered", ex.getMessage(), req);
     }
 
     @ExceptionHandler(UsernameAlreadyRegistered.class)
-    public ResponseEntity<ErrorResponse> handleUsernameExists(HttpServletRequest req, UsernameAlreadyRegistered ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(build(HttpStatus.CONFLICT, "Username Already Registered", ex.getMessage(), req));
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleUsernameExists(HttpServletRequest req, UsernameAlreadyRegistered ex) {
+        return build(HttpStatus.CONFLICT, "Username Already Registered", ex.getMessage(), req);
     }
 
     @ExceptionHandler(UserNotExist.class)
-    public ResponseEntity<ErrorResponse> handleUserNotFound(HttpServletRequest req, UserNotExist ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(build(HttpStatus.NOT_FOUND, "User Not Found", ex.getMessage(), req));
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleUserNotFound(HttpServletRequest req, UserNotExist ex) {
+        return build(HttpStatus.NOT_FOUND, "User Not Found", ex.getMessage(), req);
     }
 
     @ExceptionHandler({PlaylistNotFound.class, VideoNotFound.class})
-    public ResponseEntity<ErrorResponse> handleNotFound(HttpServletRequest req, RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(build(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), req));
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNotFound(HttpServletRequest req, RuntimeException ex) {
+        return build(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), req);
     }
 
     @ExceptionHandler(VideoAlreadyInPlaylist.class)
-    public ResponseEntity<ErrorResponse> handleVideoAlreadyInPlaylist(HttpServletRequest req, VideoAlreadyInPlaylist ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(build(HttpStatus.CONFLICT, "Video Already In Playlist", ex.getMessage(), req));
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleVideoAlreadyInPlaylist(HttpServletRequest req, VideoAlreadyInPlaylist ex) {
+        return build(HttpStatus.CONFLICT, "Video Already In Playlist", ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleValidation(HttpServletRequest req, MethodArgumentNotValidException ex) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                .collect(Collectors.joining(", "));
+        return build(HttpStatus.BAD_REQUEST, "Validation Failed", message, req);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneric(HttpServletRequest req, Exception ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", "An unexpected error occurred", req));
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleGeneric(HttpServletRequest req, Exception ex) {
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", "An unexpected error occurred", req);
     }
 }

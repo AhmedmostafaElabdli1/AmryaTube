@@ -2,14 +2,14 @@ package com.AmryaTube.app.auth.controller;
 
 import com.AmryaTube.app.auth.dto.request.LoginRequest;
 import com.AmryaTube.app.auth.dto.request.RegisterRequest;
+import com.AmryaTube.app.auth.dto.response.AuthResponse;
 import com.AmryaTube.app.auth.service.AuthService;
+import com.AmryaTube.app.common.dto.response.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.ObjectError;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,28 +24,23 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request,
-                                      BindingResult result,
-                                      HttpServletResponse response) {
-        if (result.hasErrors()) {
-            String errors = result.getAllErrors().stream()
-                    .map(ObjectError::getDefaultMessage)
-                    .reduce((a, b) -> a + ", " + b)
-                    .orElse("Validation error");
-            log.warn("Register validation failed: {}", errors);
-            return ResponseEntity.badRequest().body(errors);
-        }
-        return authService.registerUser(request, response);
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<AuthResponse> register(@Valid @RequestBody RegisterRequest request,
+                                              HttpServletResponse response) {
+        AuthResponse data = authService.registerUser(request, response);
+        return ApiResponse.created(data, "User registered successfully");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request,
-                                   HttpServletResponse response) {
-        return authService.loginUser(request, response);
+    public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request,
+                                           HttpServletResponse response) {
+        AuthResponse data = authService.loginUser(request, response);
+        return ApiResponse.ok(data, "Login successful");
     }
 
     @RequestMapping(value = "/logout", method = {RequestMethod.GET, RequestMethod.POST})
-    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
-        return authService.logoutUser(request, response);
+    public ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+        authService.logoutUser(request, response);
+        return ApiResponse.of(HttpStatus.OK, "Logout successful");
     }
 }

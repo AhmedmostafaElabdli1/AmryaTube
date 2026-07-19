@@ -1,4 +1,4 @@
-package com.AmryaTube.app.security;
+package com.AmryaTube.app.Security;
 
 import com.AmryaTube.app.auth.exception.OrganizationRegisterationNotAllowed;
 import com.AmryaTube.app.user.repository.UserRepository;

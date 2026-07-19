@@ -2,6 +2,7 @@ package com.AmryaTube.app.auth.service;
 
 import com.AmryaTube.app.auth.dto.request.LoginRequest;
 import com.AmryaTube.app.auth.dto.request.RegisterRequest;
+import com.AmryaTube.app.auth.dto.response.AuthResponse;
 import com.AmryaTube.app.common.enums.AuthProvider;
 import com.AmryaTube.app.common.enums.GlobalRole;
 import com.AmryaTube.app.user.entity.User;
@@ -14,7 +15,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -41,7 +41,7 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
-    public ResponseEntity<?> registerUser(RegisterRequest request, HttpServletResponse response) {
+    public AuthResponse registerUser(RegisterRequest request, HttpServletResponse response) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new UsernameAlreadyRegistered(request.getUsername());
         }
@@ -70,10 +70,15 @@ public class AuthService {
 
         setAccessCookie(response, token, 30 * 24 * 60 * 60);
 
-        return ResponseEntity.ok("User registered successfully. Token: " + token);
+        return AuthResponse.builder()
+                .token(token)
+                .email(user.getEmail())
+                .name(user.getName())
+                .username(user.getUsername())
+                .build();
     }
 
-    public ResponseEntity<?> loginUser(LoginRequest request, HttpServletResponse response) {
+    public AuthResponse loginUser(LoginRequest request, HttpServletResponse response) {
         if (!userRepository.existsByEmail(request.getEmail())) {
             throw new UserNotExist(request.getEmail());
         }
@@ -82,22 +87,28 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UserNotExist(request.getEmail()));
+
         String token = jwtService.generateJwtToken(request.getEmail(), GlobalRole.VIEWER.toString());
         int maxAge = request.isRememberMe() ? 30 * 24 * 60 * 60 : -1;
         setAccessCookie(response, token, maxAge);
 
-        return ResponseEntity.ok("Login successful. Token: " + token);
+        return AuthResponse.builder()
+                .token(token)
+                .email(user.getEmail())
+                .name(user.getName())
+                .username(user.getUsername())
+                .build();
     }
 
-    public ResponseEntity<?> logoutUser(HttpServletRequest request, HttpServletResponse response) {
+    public void logoutUser(HttpServletRequest request, HttpServletResponse response) {
         setAccessCookie(response, "", 0);
 
         HttpSession session = request.getSession(false);
         if (session != null) session.invalidate();
 
         SecurityContextHolder.clearContext();
-
-        return ResponseEntity.ok("Logout successful");
     }
 
     private void setAccessCookie(HttpServletResponse response, String value, int maxAge) {
