@@ -3,6 +3,7 @@ package com.AmryaTube.app.auth.service;
 import com.AmryaTube.app.auth.dto.request.LoginRequest;
 import com.AmryaTube.app.auth.dto.request.RegisterRequest;
 import com.AmryaTube.app.auth.dto.response.AuthResponse;
+import com.AmryaTube.app.common.dto.response.ApiResponse;
 import com.AmryaTube.app.common.enums.AuthProvider;
 import com.AmryaTube.app.common.enums.GlobalRole;
 import com.AmryaTube.app.user.entity.User;
@@ -10,11 +11,6 @@ import com.AmryaTube.app.user.exception.EmailAlreadyRegistered;
 import com.AmryaTube.app.user.exception.UserNotExist;
 import com.AmryaTube.app.user.exception.UsernameAlreadyRegistered;
 import com.AmryaTube.app.user.repository.UserRepository;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -41,7 +37,7 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
-    public AuthResponse registerUser(RegisterRequest request, HttpServletResponse response) {
+    public ApiResponse<AuthResponse> registerUser(RegisterRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new UsernameAlreadyRegistered(request.getUsername());
         }
@@ -62,27 +58,16 @@ public class AuthService {
 
         userRepository.save(user);
 
-        String token = jwtService.generateJwtToken(request.getEmail(), GlobalRole.VIEWER.toString());
+        String token = jwtService.generateJwtToken(request.getEmail(), user.getRole().toString());
 
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                user.getEmail(), null, List.of(new SimpleGrantedAuthority("ROLE_" + GlobalRole.VIEWER)));
+                user.getEmail(), null, List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().toString())));
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        setAccessCookie(response, token, 30 * 24 * 60 * 60);
-
-        return AuthResponse.builder()
-                .token(token)
-                .email(user.getEmail())
-                .name(user.getName())
-                .username(user.getUsername())
-                .build();
+        return ApiResponse.created(toAuthResponse(user, token), "User registered successfully");
     }
 
-    public AuthResponse loginUser(LoginRequest request, HttpServletResponse response) {
-        if (!userRepository.existsByEmail(request.getEmail())) {
-            throw new UserNotExist(request.getEmail());
-        }
-
+    public ApiResponse<AuthResponse> loginUser(LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -90,34 +75,21 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UserNotExist(request.getEmail()));
 
-        String token = jwtService.generateJwtToken(request.getEmail(), GlobalRole.VIEWER.toString());
-        int maxAge = request.isRememberMe() ? 30 * 24 * 60 * 60 : -1;
-        setAccessCookie(response, token, maxAge);
+        String token = jwtService.generateJwtToken(request.getEmail(), user.getRole().toString());
 
+        return ApiResponse.ok(toAuthResponse(user, token), "Login successful");
+    }
+
+    public void logoutUser() {
+        SecurityContextHolder.clearContext();
+    }
+
+    private AuthResponse toAuthResponse(User user, String token) {
         return AuthResponse.builder()
                 .token(token)
                 .email(user.getEmail())
                 .name(user.getName())
                 .username(user.getUsername())
                 .build();
-    }
-
-    public void logoutUser(HttpServletRequest request, HttpServletResponse response) {
-        setAccessCookie(response, "", 0);
-
-        HttpSession session = request.getSession(false);
-        if (session != null) session.invalidate();
-
-        SecurityContextHolder.clearContext();
-    }
-
-    private void setAccessCookie(HttpServletResponse response, String value, int maxAge) {
-        ResponseCookie cookie = ResponseCookie.from("access-token", value)
-                .httpOnly(true)
-                .path("/")
-                .sameSite("Strict")
-                .maxAge(maxAge)
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 }

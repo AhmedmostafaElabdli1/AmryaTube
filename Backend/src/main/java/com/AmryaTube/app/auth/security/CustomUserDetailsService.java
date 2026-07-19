@@ -1,4 +1,4 @@
-package com.AmryaTube.app.security;
+package com.AmryaTube.app.auth.security;
 
 import com.AmryaTube.app.user.entity.User;
 import com.AmryaTube.app.common.enums.GlobalRole;
@@ -27,7 +27,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
-                List.of(new SimpleGrantedAuthority("ROLE_" + GlobalRole.VIEWER))
+                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().toString()))
         );
     }
 }

@@ -1,4 +1,4 @@
-package com.AmryaTube.app.security;
+package com.AmryaTube.app.auth.security;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

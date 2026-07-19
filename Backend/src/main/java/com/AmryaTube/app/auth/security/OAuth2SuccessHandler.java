@@ -1,4 +1,4 @@
-package com.AmryaTube.app.security;
+package com.AmryaTube.app.auth.security;
 
 import com.AmryaTube.app.user.entity.User;
 import com.AmryaTube.app.common.enums.AuthProvider;
@@ -50,11 +50,11 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         }
 
         try {
-            userRepository.findByEmail(email)
+            User user = userRepository.findByEmail(email)
                     .map(existing -> handleExistingUser(existing, providerId, pictureUrl))
                     .orElseGet(() -> handleNewUser(email, name, providerId, pictureUrl));
 
-            String accessToken = jwtService.generateJwtToken(email, GlobalRole.VIEWER.toString());
+            String accessToken = jwtService.generateJwtToken(email, user.getRole().toString());
 
             ResponseCookie accessCookie = ResponseCookie.from("access-token", accessToken)
                     .httpOnly(true)

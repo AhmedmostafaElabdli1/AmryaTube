@@ -37,6 +37,9 @@ public class ApiResponse<T> {
         return of(HttpStatus.OK, "Success", data);
     }
 
+    public static <T> ApiResponse<T> signed(T data) {
+        return of(HttpStatus.OK,"login success", data);
+    }
     public static <T> ApiResponse<T> ok(T data, String message) {
         return of(HttpStatus.OK, message, data);
     }

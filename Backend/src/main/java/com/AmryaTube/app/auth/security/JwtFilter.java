@@ -1,4 +1,4 @@
-package com.AmryaTube.app.security;
+package com.AmryaTube.app.auth.security;
 
 import com.AmryaTube.app.auth.service.JwtService;
 import jakarta.servlet.FilterChain;
